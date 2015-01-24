@@ -46,10 +46,12 @@ type (
 	}
 )
 
+// NewClient returns a new default Jira client.
 func NewClient(username, password string, baseURL *url.URL) Jira {
 	return DefaultClient{username: username, password: password, baseURL: baseURL, httpClient: &http.Client{Timeout: 10 * time.Second}}
 }
 
+// GetComponents returns a map of Component indexed by component name.
 func (client DefaultClient) GetComponents(projectID int) (map[string]Component, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%d/components", client.baseURL, projectID), nil)
 	if err != nil {
@@ -79,12 +81,13 @@ func (client DefaultClient) GetComponents(projectID int) (map[string]Component, 
 
 	m := make(map[string]Component)
 	for _, c := range r {
-		m[c.ID] = c
+		m[c.Name] = c
 	}
 
 	return m, nil
 }
 
+// GetVersions returns a map of Version indexed by version name.
 func (client DefaultClient) GetVersions(projectID int) (map[string]Version, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%d/versions", client.baseURL, projectID), nil)
 	if err != nil {
@@ -120,6 +123,7 @@ func (client DefaultClient) GetVersions(projectID int) (map[string]Version, erro
 	return m, nil
 }
 
+// CreateVersion creates a new version in Jira for the given project ID and version name.
 func (client DefaultClient) CreateVersion(projectID int, versionName string) error {
 	version := Version{Name: versionName, Description: "Version " + versionName, ProjectID: projectID, Archived: false, Released: true, ReleaseDate: fmt.Sprintf(time.Now().Format("2006-01-02"))}
 	data, err := json.Marshal(&version)

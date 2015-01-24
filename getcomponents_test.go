@@ -84,16 +84,16 @@ func TestGetComponents(t *testing.T) {
 	if len(r) != 2 {
 		t.Fatalf("Want 2 but got %d\n", len(r))
 	}
-	if r["12105"].Name != "lolcats" {
+	if r["lolcats"].Name != "lolcats" {
 		t.Fatalf("Want lolcats but got %s\n", r["12105"].Name)
 	}
-	if r["12105"].ID != "12105" {
+	if r["lolcats"].ID != "12105" {
 		t.Fatalf("Want 12105 but got %s\n", r["12105"].Name)
 	}
-	if r["13400"].Name != "no-nukes" {
+	if r["no-nukes"].Name != "no-nukes" {
 		t.Fatalf("Want no-nukes but got %s\n", r["13400"].Name)
 	}
-	if r["13400"].ID != "13400" {
+	if r["no-nukes"].ID != "13400" {
 		t.Fatalf("Want 13400 but got %s\n", r["13400"].ID)
 	}
 }
