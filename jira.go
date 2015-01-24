@@ -13,7 +13,8 @@ import (
 
 type (
 	Jira interface {
-		GetComponents(projectKey string) ([]Component, error)
+		GetComponents(projectKey string) (map[string]Component, error)
+		GetVersions(projectKey string) (map[string]Version, error)
 		CreateVersion(projectKey, versionName string) error
 		MapVersionToComponent(componentID, versionName string) error
 	}
@@ -33,6 +34,7 @@ type (
 	}
 
 	Version struct {
+		ID          string `json:"id"`
 		Name        string `json:"name:`
 		Description string `json:"description"`
 		Project     string `json:"project"`
@@ -44,7 +46,7 @@ func NewClient(username, password string, baseURL *url.URL) Jira {
 	return DefaultClient{username: username, password: password, baseURL: baseURL, httpClient: &http.Client{Timeout: 10 * time.Second}}
 }
 
-func (client DefaultClient) GetComponents(projectKey string) ([]Component, error) {
+func (client DefaultClient) GetComponents(projectKey string) (map[string]Component, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%s/components", client.baseURL, projectKey), nil)
 	if err != nil {
 		return nil, err
@@ -71,7 +73,49 @@ func (client DefaultClient) GetComponents(projectKey string) ([]Component, error
 	if err != nil {
 		return nil, err
 	}
-	return r, nil
+
+	m := make(map[string]Component)
+	for _, c := range r {
+		m[c.ID] = c
+	}
+
+	return m, nil
+}
+
+func (client DefaultClient) GetVersions(projectKey string) (map[string]Version, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%s/versions", client.baseURL, projectKey), nil)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("jira.GetVersions URL %s\n", req.URL)
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	if responseCode != http.StatusOK {
+		var reason string = "unhandled reason"
+		switch {
+		case responseCode == http.StatusNotFound:
+			reason = "Not found."
+		}
+		return nil, fmt.Errorf("Error getting project versions: %s.  Status code: %d.  Reason: %s\n", string(data), responseCode, reason)
+	}
+
+	var r []Version
+	err = json.Unmarshal(data, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]Version)
+	for _, c := range r {
+		m[c.Name] = c
+	}
+
+	return m, nil
 }
 
 func (client DefaultClient) CreateVersion(projectKey, versionName string) error {

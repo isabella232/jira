@@ -8,7 +8,8 @@ import (
 	"testing"
 )
 
-var response = `
+func TestGetComponents(t *testing.T) {
+	response := `
 [
    {
       "isAssigneeTypeValid" : false,
@@ -18,13 +19,13 @@ var response = `
             "32x32" : "https://example.com/secure/useravatar?size=medium&ownerId=bsimpson&avatarId=11900",
             "24x24" : "https://example.com/secure/useravatar?size=small&ownerId=bsimpson&avatarId=11900",
             "16x16" : "https://example.com/secure/useravatar?size=xsmall&ownerId=bsimpson&avatarId=11900"
-         },
+         },     
          "active" : true,
          "name" : "bsimpson",
          "self" : "https://example.com/rest/api/2/user?username=bsimpson",
          "displayName" : "Bart Simpson",
          "key" : "bsimpson"
-      },
+      },        
       "realAssigneeType" : "PROJECT_DEFAULT",
       "name" : "lolcats",
       "self" : "https://example.com/rest/api/2/component/12105",
@@ -32,7 +33,7 @@ var response = `
       "assigneeType" : "PROJECT_DEFAULT",
       "id" : "12105"
    },
-   {
+   {    
       "isAssigneeTypeValid" : false,
       "lead" : {
          "avatarUrls" : {
@@ -46,18 +47,16 @@ var response = `
          "self" : "https://example.com/rest/api/2/user?username=hsimpson",
          "displayName" : "Homer Simpson",
          "key" : "hsimpson"
-      },
+      },        
       "realAssigneeType" : "PROJECT_DEFAULT",
       "name" : "no-nukes",
       "self" : "https://example.com/rest/api/2/component/13400",
       "description" : "Demonstration of an nuclear power plant server",
       "assigneeType" : "PROJECT_DEFAULT",
       "id" : "13400"
-   }
+   }    
 ]
 `
-
-func TestGetComponents(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			t.Fatalf("wanted GET but found %s\n", r.Method)
@@ -85,17 +84,17 @@ func TestGetComponents(t *testing.T) {
 	if len(r) != 2 {
 		t.Fatalf("Want 2 but got %d\n", len(r))
 	}
-	if r[0].Name != "lolcats" {
-		t.Fatalf("Want lolcats but got %s\n", r[0].Name)
+	if r["12105"].Name != "lolcats" {
+		t.Fatalf("Want lolcats but got %s\n", r["12105"].Name)
 	}
-	if r[0].ID != "12105" {
-		t.Fatalf("Want 12105 but got %s\n", r[0].ID)
+	if r["12105"].ID != "12105" {
+		t.Fatalf("Want 12105 but got %s\n", r["12105"].Name)
 	}
-	if r[1].Name != "no-nukes" {
-		t.Fatalf("Want no-nukes but got %s\n", r[0].Name)
+	if r["13400"].Name != "no-nukes" {
+		t.Fatalf("Want no-nukes but got %s\n", r["13400"].Name)
 	}
-	if r[1].ID != "13400" {
-		t.Fatalf("Want 13400 but got %s\n", r[0].ID)
+	if r["13400"].ID != "13400" {
+		t.Fatalf("Want 13400 but got %s\n", r["13400"].ID)
 	}
 }
 
