@@ -69,8 +69,7 @@ func (client DefaultClient) GetComponents(projectKey string) (map[string]Compone
 	}
 
 	var r []Component
-	err = json.Unmarshal(data, &r)
-	if err != nil {
+	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, err
 	}
 
@@ -105,8 +104,7 @@ func (client DefaultClient) GetVersions(projectKey string) (map[string]Version, 
 	}
 
 	var r []Version
-	err = json.Unmarshal(data, &r)
-	if err != nil {
+	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, err
 	}
 
