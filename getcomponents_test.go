@@ -62,7 +62,7 @@ func TestGetComponents(t *testing.T) {
 			t.Fatalf("wanted GET but found %s\n", r.Method)
 		}
 		url := *r.URL
-		if url.Path != "/rest/api/2/project/PRJ/components" {
+		if url.Path != "/rest/api/2/project/1/components" {
 			t.Fatalf("Want /rest/api/2/project/PRJ/components but got %s\n", url.Path)
 		}
 		if r.Header.Get("Accept") != "application/json" {
@@ -77,7 +77,7 @@ func TestGetComponents(t *testing.T) {
 
 	url, _ := url.Parse(testServer.URL)
 	client := NewClient("u", "p", url)
-	r, err := client.GetComponents("PRJ")
+	r, err := client.GetComponents(1)
 	if err != nil {
 		t.Fatalf("Not expecting an error %v\n", err)
 	}
@@ -106,7 +106,7 @@ func TestGetComponents404(t *testing.T) {
 
 	url, _ := url.Parse(testServer.URL)
 	client := NewClient("u", "p", url)
-	_, err := client.GetComponents("PRJ")
+	_, err := client.GetComponents(1)
 	if err == nil {
 		t.Fatalf("Expecting an error\n")
 	}

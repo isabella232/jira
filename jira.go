@@ -1,6 +1,7 @@
 package jira
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,9 +14,9 @@ import (
 
 type (
 	Jira interface {
-		GetComponents(projectKey string) (map[string]Component, error)
-		GetVersions(projectKey string) (map[string]Version, error)
-		CreateVersion(projectKey, versionName string) error
+		GetComponents(projectID int) (map[string]Component, error)
+		GetVersions(projectID int) (map[string]Version, error)
+		CreateVersion(projectID int, versionName string) error
 		MapVersionToComponent(componentID, versionName string) error
 	}
 
@@ -35,10 +36,13 @@ type (
 
 	Version struct {
 		ID          string `json:"id"`
-		Name        string `json:"name:`
-		Description string `json:"description"`
+		Name        string `json:"name`
+		Description string `json:"description`
 		Project     string `json:"project"`
 		ProjectID   int    `json:"projectId"`
+		Archived    bool   `json:"archived"`
+		Released    bool   `json:"released"`
+		ReleaseDate string `json:"releaseDate"`
 	}
 )
 
@@ -46,8 +50,8 @@ func NewClient(username, password string, baseURL *url.URL) Jira {
 	return DefaultClient{username: username, password: password, baseURL: baseURL, httpClient: &http.Client{Timeout: 10 * time.Second}}
 }
 
-func (client DefaultClient) GetComponents(projectKey string) (map[string]Component, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%s/components", client.baseURL, projectKey), nil)
+func (client DefaultClient) GetComponents(projectID int) (map[string]Component, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%d/components", client.baseURL, projectID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +85,8 @@ func (client DefaultClient) GetComponents(projectKey string) (map[string]Compone
 	return m, nil
 }
 
-func (client DefaultClient) GetVersions(projectKey string) (map[string]Version, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%s/versions", client.baseURL, projectKey), nil)
+func (client DefaultClient) GetVersions(projectID int) (map[string]Version, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%d/versions", client.baseURL, projectID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +120,34 @@ func (client DefaultClient) GetVersions(projectKey string) (map[string]Version, 
 	return m, nil
 }
 
-func (client DefaultClient) CreateVersion(projectKey, versionName string) error {
+func (client DefaultClient) CreateVersion(projectID int, versionName string) error {
+	version := Version{Name: versionName, Description: "Version " + versionName, ProjectID: projectID, Archived: false, Released: true, ReleaseDate: fmt.Sprintf(time.Now().Format("2006-01-02"))}
+	data, err := json.Marshal(&version)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/api/2/version", client.baseURL), bytes.NewBuffer(data))
+	log.Printf("jira.GetVersions URL %s\n", req.URL)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-type", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return nil
+	}
+	if responseCode != http.StatusCreated {
+		var reason string = "unhandled reason"
+		switch {
+		case responseCode == http.StatusNotFound:
+			reason = "Not found."
+		case responseCode == http.StatusForbidden:
+			reason = "Forbidden."
+		}
+		return fmt.Errorf("Error creating project version: %s.  Status code: %d.  Reason: %s\n", string(data), responseCode, reason)
+	}
 	return nil
 }
 

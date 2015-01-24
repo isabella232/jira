@@ -35,7 +35,7 @@ func TestGetVersions(t *testing.T) {
 			t.Fatalf("wanted GET but found %s\n", r.Method)
 		}
 		url := *r.URL
-		if url.Path != "/rest/api/2/project/PRJ/versions" {
+		if url.Path != "/rest/api/2/project/1/versions" {
 			t.Fatalf("Want /rest/api/2/project/PRJ/versions but got %s\n", url.Path)
 		}
 		if r.Header.Get("Accept") != "application/json" {
@@ -50,7 +50,7 @@ func TestGetVersions(t *testing.T) {
 
 	url, _ := url.Parse(testServer.URL)
 	client := NewClient("u", "p", url)
-	r, err := client.GetVersions("PRJ")
+	r, err := client.GetVersions(1)
 	if err != nil {
 		t.Fatalf("Not expecting an error %v\n", err)
 	}
@@ -78,7 +78,7 @@ func TestGetVersions404(t *testing.T) {
 	defer testServer.Close()
 	url, _ := url.Parse(testServer.URL)
 	client := NewClient("u", "p", url)
-	_, err := client.GetVersions("PRJ")
+	_, err := client.GetVersions(1)
 	if err == nil {
 		t.Fatalf("Expecting an error\n")
 	}
