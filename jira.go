@@ -1,3 +1,4 @@
+// JIRA API with Oguz Component Mappings
 package jira
 
 import (
@@ -17,11 +18,21 @@ import (
 var debug bool
 
 type (
+	// https://docs.atlassian.com/jira/REST/latest/
 	Jira interface {
 		GetComponents(projectID int) (map[string]Component, error)
 		GetVersions(projectID int) (map[string]Version, error)
 		CreateVersion(projectID int, versionName string) error
-		MapVersionToComponent(componentID, versionName string) error
+	}
+
+	// http://jiraplugins.denizoguz.com/wp-content/uploads/2014/09/REST-Manual-v0.1.pdf
+	ComponentVersions interface {
+		GetMappings() error
+		GetVersionsForComponent(projectID, componentID int) error
+		UpdateReleaseDate(mappingID int, releaseDate string) error
+		UpdateReleasedFlag(mappingID int, released bool) error
+		CreateMapping(componentName, versionName string) error
+		DeleteMapping(mappingID int) error
 	}
 
 	DefaultClient struct {
@@ -30,6 +41,7 @@ type (
 		baseURL    *url.URL
 		httpClient *http.Client
 		Jira
+		ComponentVersions
 	}
 
 	Component struct {
@@ -152,7 +164,62 @@ func (client DefaultClient) CreateVersion(projectID int, versionName string) err
 	return nil
 }
 
-func (client DefaultClient) MapVersionToComponent(componentID, versionName string) error {
+func (client DefaultClient) CreateMapping(componentID, versionName string) error {
+	// POST http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/
+	/*
+		body:
+			   {
+			    "projectId":10000,
+			    "componentId":10003,
+			    "versionId":10001,
+			    "released":false
+			   }
+	*/
+	return nil
+}
+
+func (client DefaultClient) GetMappings() error {
+	// GET http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/mappings
+	return nil
+}
+
+func (client DefaultClient) GetVersionsForComponent(projectID, componentID int) error {
+	// GET http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/applicable_versions?projectId=10000&projectKey=&selectedComponentIds=10000
+	/*
+	   [ { "description" : "Unknown",
+	       "id" : -1,
+	       "isReleased" : false,
+	       "name" : "Unknown"
+	     },
+	     { "id" : 10001,
+	       "isReleased" : true,
+	       "name" : "v2"
+	     },
+	     { "id" : 10000,
+	       "isReleased" : true,
+	       "name" : "v1"
+	     },
+	     { "id" : 10002,
+	       "isReleased" : true,
+	       "name" : "v3"
+	     }
+	   ]
+	*/
+	return nil
+}
+
+func (client DefaultClient) UpdateReleaseDate(mappingID int, releaseDate string) error {
+	// PUT http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/releaseDate/5?releaseDate=16%2FSep%2F14
+	return nil
+}
+
+func (client DefaultClient) UpdateReleasedFlag(mappingID int, released bool) error {
+	// PUT http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/releaseFlag/5?isReleased=true
+	return nil
+}
+
+func (client DefaultClient) DeleteMapping(mappingID int) error {
+	// DELETE http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/5
 	return nil
 }
 
