@@ -20,6 +20,7 @@ var debug bool
 type (
 	// https://docs.atlassian.com/jira/REST/latest/
 	Jira interface {
+		GetProject(projectKey string) (Project, error)
 		GetComponents(projectID int) (map[string]Component, error)
 		GetVersions(projectID int) (map[string]Version, error)
 		CreateVersion(projectID int, versionName string) error
@@ -33,6 +34,10 @@ type (
 		UpdateReleasedFlag(mappingID int, released bool) error
 		CreateMapping(componentName, versionName string) error
 		DeleteMapping(mappingID int) error
+	}
+
+	Project struct {
+		ID string `json:"id"`
 	}
 
 	DefaultClient struct {
@@ -69,6 +74,33 @@ func init() {
 // NewClient returns a new default Jira client.
 func NewClient(username, password string, baseURL *url.URL) Jira {
 	return DefaultClient{username: username, password: password, baseURL: baseURL, httpClient: &http.Client{Timeout: 10 * time.Second}}
+}
+
+// GetProject returns a representation of a Jira project.
+func (client DefaultClient) GetProject(projectKey string) (Project, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/project/%s", client.baseURL, projectKey), nil)
+	if err != nil {
+		return Project{}, err
+	}
+	if debug {
+		log.Printf("jira.GetComponents URL %s\n", req.URL)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return Project{}, err
+	}
+	if responseCode != http.StatusOK {
+		return Project{}, fmt.Errorf("Error getting project versions.  Status code: %d.\n", responseCode)
+	}
+
+	var r Project
+	if err := json.Unmarshal(data, &r); err != nil {
+		return Project{}, err
+	}
+	return r, nil
 }
 
 // GetComponents returns a map of Component indexed by component name.
