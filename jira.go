@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -37,7 +38,8 @@ type (
 	}
 
 	Project struct {
-		ID string `json:"id"`
+		IDAsString string `json:"id"`
+		ID         int
 	}
 
 	DefaultClient struct {
@@ -99,6 +101,10 @@ func (client DefaultClient) GetProject(projectKey string) (Project, error) {
 	var r Project
 	if err := json.Unmarshal(data, &r); err != nil {
 		return Project{}, err
+	}
+
+	if i, err := strconv.Atoi(r.IDAsString); err == nil {
+		r.ID = i
 	}
 	return r, nil
 }
