@@ -33,7 +33,7 @@ type (
 		GetVersionsForComponent(projectID, componentID int) error
 		UpdateReleaseDate(mappingID int, releaseDate string) error
 		UpdateReleasedFlag(mappingID int, released bool) error
-		CreateMapping(componentName, versionName string) error
+		CreateMapping(projectID int, componentID int, versionID string) error
 		DeleteMapping(mappingID int) error
 	}
 
@@ -202,7 +202,7 @@ func (client DefaultClient) CreateVersion(projectID int, versionName string) err
 	return nil
 }
 
-func (client DefaultClient) CreateMapping(componentID, versionName string) error {
+func (client DefaultClient) CreateMapping(projectID, componentID, versionID int) error {
 	// POST http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/
 	/*
 		body:
