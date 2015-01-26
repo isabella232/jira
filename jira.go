@@ -1,4 +1,5 @@
 // JIRA API with Oguz Component Mappings
+// http://jiraplugins.denizoguz.com/wp-content/uploads/2014/09/REST-Manual-v0.1.pdf
 package jira
 
 import (
@@ -25,12 +26,8 @@ type (
 		GetComponents(projectID string) (map[string]Component, error)
 		GetVersions(projectID string) (map[string]Version, error)
 		CreateVersion(projectID, versionName string) (Version, error)
-	}
-
-	// http://jiraplugins.denizoguz.com/wp-content/uploads/2014/09/REST-Manual-v0.1.pdf
-	ComponentVersions interface {
 		GetMappings() error
-		GetVersionsForComponent(projectID, componentID int) error
+		GetVersionsForComponent(projectID, componentID string) error
 		UpdateReleaseDate(mappingID int, releaseDate string) error
 		UpdateReleasedFlag(mappingID int, released bool) error
 		CreateMapping(projectID string, componentID string, versionID string) error
@@ -47,7 +44,6 @@ type (
 		baseURL    *url.URL
 		httpClient *http.Client
 		Jira
-		ComponentVersions
 	}
 
 	Component struct {
