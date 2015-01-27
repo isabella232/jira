@@ -34,7 +34,7 @@ type (
 	// http://jiraplugins.denizoguz.com/wp-content/uploads/2014/09/REST-Manual-v0.1.pdf
 	ComponentVersions interface {
 		GetMappings() (map[int]Mapping, error)
-		GetVersionsForComponent(projectID, componentID string) error
+		GetVersionsForComponent(projectID, componentID string) (map[int]CVVersion, error)
 		UpdateReleaseDate(mappingID int, releaseDate string) error
 		UpdateReleasedFlag(mappingID int, released bool) error
 		CreateMapping(projectID string, componentID string, versionID string) (Mapping, error)
@@ -59,6 +59,20 @@ type (
 		Description string `json:"description"`
 	}
 
+	/*
+	   {
+	        "name" : "Unknown",
+	        "isReleased" : false,
+	        "id" : -1,
+	        "description" : "Unknown"
+	     },
+	     {
+	        "name" : "1.1",
+	        "isReleased" : true,
+	        "id" : 12227
+	     }
+	*/
+
 	Version struct {
 		ID          string `json:"id"`
 		Name        string `json:"name"`
@@ -68,6 +82,14 @@ type (
 		Archived    bool   `json:"archived"`
 		Released    bool   `json:"released"`
 		ReleaseDate string `json:"releaseDate"`
+	}
+
+	// Component Version add-on's notion of a version
+	CVVersion struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		Released    bool   `json:"isReleased"`
 	}
 
 	Mapping struct {
@@ -269,7 +291,6 @@ func (client DefaultClient) CreateMapping(projectID, componentID, versionID stri
 
 // GetMappings returns all known mappings for all projects.
 func (client DefaultClient) GetMappings() (map[int]Mapping, error) {
-	// GET http://localhost:2990/rest/com.deniz.jira.mapping/latest/mappings
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/mappings", client.baseURL), nil)
 	if err != nil {
 		return nil, err
@@ -301,29 +322,35 @@ func (client DefaultClient) GetMappings() (map[int]Mapping, error) {
 }
 
 // GetVersionsForComponent returns the versions for the given component ID in the context of the given project ID.
-func (client DefaultClient) GetVersionsForComponent(projectID, componentID string) error {
-	// GET http://localhost:2990/rest/com.deniz.jira.mapping/latest/applicable_versions?projectId=10000&projectKey=&selectedComponentIds=10000
-	/*
-	   [ { "description" : "Unknown",
-	       "id" : -1,
-	       "isReleased" : false,
-	       "name" : "Unknown"
-	     },
-	     { "id" : 10001,
-	       "isReleased" : true,
-	       "name" : "v2"
-	     },
-	     { "id" : 10000,
-	       "isReleased" : true,
-	       "name" : "v1"
-	     },
-	     { "id" : 10002,
-	       "isReleased" : true,
-	       "name" : "v3"
-	     }
-	   ]
-	*/
-	return nil
+func (client DefaultClient) GetVersionsForComponent(projectID, componentID string) (map[int]CVVersion, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/applicable_versions?projectId=%s&selectedComponentIds=%s", client.baseURL, projectID, componentID), nil)
+	if err != nil {
+		return nil, err
+	}
+	if debug {
+		log.Printf("jira.GetVersionsForComponent URL %s\n", req.URL)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	if responseCode != http.StatusOK {
+		return nil, fmt.Errorf("error getting mappings.  Status code: %d.\n", responseCode)
+	}
+
+	var r []CVVersion
+	if err := json.Unmarshal(data, &r); err != nil {
+		return nil, err
+	}
+
+	m := make(map[int]CVVersion)
+	for _, c := range r {
+		m[c.ID] = c
+	}
+	return m, nil
 }
 
 // UpdateReleaseDate updates the version release date to releaseDate for the given mapping ID.
