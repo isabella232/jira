@@ -59,20 +59,6 @@ type (
 		Description string `json:"description"`
 	}
 
-	/*
-	   {
-	        "name" : "Unknown",
-	        "isReleased" : false,
-	        "id" : -1,
-	        "description" : "Unknown"
-	     },
-	     {
-	        "name" : "1.1",
-	        "isReleased" : true,
-	        "id" : 12227
-	     }
-	*/
-
 	Version struct {
 		ID          string `json:"id"`
 		Name        string `json:"name"`
@@ -397,7 +383,22 @@ func (client DefaultClient) UpdateReleasedFlag(mappingID int, released bool) err
 
 // DeleteMapping deletes the mapping for the given mapping ID.
 func (client DefaultClient) DeleteMapping(mappingID int) error {
-	// DELETE http://localhost:2990/rest/com.deniz.jira.mapping/latest/5
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/%d", client.baseURL, mappingID), nil)
+	if err != nil {
+		return err
+	}
+	if debug {
+		log.Printf("jira.DeleteMapping URL %s\n", req.URL)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+	responseCode, _, err := client.consumeResponse(req)
+	if err != nil {
+		return err
+	}
+	if responseCode != http.StatusNoContent {
+		return fmt.Errorf("error deleting mapping.  Status code: %d.\n", responseCode)
+	}
 	return nil
 }
 
