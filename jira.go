@@ -218,7 +218,6 @@ func (client DefaultClient) CreateVersion(projectID, versionName string) (Versio
 
 // CreateMapping creates a mapping between the given component ID and version ID in the context of the given project ID.
 func (client DefaultClient) CreateMapping(projectID, componentID, versionID string) (Mapping, error) {
-	// POST http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/
 	pId, err := strconv.Atoi(projectID)
 	if err != nil {
 		return Mapping{}, err
@@ -237,7 +236,7 @@ func (client DefaultClient) CreateMapping(projectID, componentID, versionID stri
 		return Mapping{}, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/jira/rest/com.deniz.jira.mapping/latest/", client.baseURL), bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/", client.baseURL), bytes.NewBuffer(data))
 	if debug {
 		log.Printf("jira.CreateMapping URL %s\n", req.URL)
 	}
@@ -264,13 +263,13 @@ func (client DefaultClient) CreateMapping(projectID, componentID, versionID stri
 
 // GetMappings returns all known mappings for all projects.
 func (client DefaultClient) GetMappings() error {
-	// GET http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/mappings
+	// GET http://localhost:2990/rest/com.deniz.jira.mapping/latest/mappings
 	return nil
 }
 
 // GetVersionsForComponent returns the versions for the given component ID in the context of the given project ID.
 func (client DefaultClient) GetVersionsForComponent(projectID, componentID string) error {
-	// GET http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/applicable_versions?projectId=10000&projectKey=&selectedComponentIds=10000
+	// GET http://localhost:2990/rest/com.deniz.jira.mapping/latest/applicable_versions?projectId=10000&projectKey=&selectedComponentIds=10000
 	/*
 	   [ { "description" : "Unknown",
 	       "id" : -1,
@@ -296,19 +295,19 @@ func (client DefaultClient) GetVersionsForComponent(projectID, componentID strin
 
 // UpdateReleaseDate updates the version release date to releaseDate for the given mapping ID.
 func (client DefaultClient) UpdateReleaseDate(mappingID int, releaseDate string) error {
-	// PUT http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/releaseDate/5?releaseDate=16%2FSep%2F14
+	// PUT http://localhost:2990/rest/com.deniz.jira.mapping/latest/releaseDate/5?releaseDate=16%2FSep%2F14
 	return nil
 }
 
 // UpdateReleasedFlag updates the version released flag for the given mapping ID.
 func (client DefaultClient) UpdateReleasedFlag(mappingID int, released bool) error {
-	// PUT http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/releaseFlag/5?isReleased=true
+	// PUT http://localhost:2990/rest/com.deniz.jira.mapping/latest/releaseFlag/5?isReleased=true
 	return nil
 }
 
 // DeleteMapping deletes the mapping for the given mapping ID.
 func (client DefaultClient) DeleteMapping(mappingID int) error {
-	// DELETE http://localhost:2990/jira/rest/com.deniz.jira.mapping/latest/5
+	// DELETE http://localhost:2990/rest/com.deniz.jira.mapping/latest/5
 	return nil
 }
 
