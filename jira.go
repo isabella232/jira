@@ -360,7 +360,7 @@ func (client DefaultClient) UpdateReleaseDate(mappingID int, releaseDate string)
 		return err
 	}
 	if debug {
-		log.Printf("jira.GetVersionsForComponent URL %s\n", req.URL)
+		log.Printf("jira.UpdateReleaseDate URL %s\n", req.URL)
 	}
 	req.Header.Set("Accept", "application/json")
 	req.SetBasicAuth(client.username, client.password)
@@ -376,7 +376,22 @@ func (client DefaultClient) UpdateReleaseDate(mappingID int, releaseDate string)
 
 // UpdateReleasedFlag updates the version released flag for the given mapping ID.
 func (client DefaultClient) UpdateReleasedFlag(mappingID int, released bool) error {
-	// PUT http://localhost:2990/rest/com.deniz.jira.mapping/latest/releaseFlag/5?isReleased=true
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/releaseFlag/%d?isReleased=%v", client.baseURL, mappingID, released), nil)
+	if err != nil {
+		return err
+	}
+	if debug {
+		log.Printf("jira.UpdateReleaseFlag URL %s\n", req.URL)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+	responseCode, _, err := client.consumeResponse(req)
+	if err != nil {
+		return err
+	}
+	if responseCode != http.StatusOK {
+		return fmt.Errorf("error updating mapping is-released flag.  Status code: %d.\n", responseCode)
+	}
 	return nil
 }
 
