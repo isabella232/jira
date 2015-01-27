@@ -33,7 +33,7 @@ type (
 
 	// http://jiraplugins.denizoguz.com/wp-content/uploads/2014/09/REST-Manual-v0.1.pdf
 	ComponentVersions interface {
-		GetMappings() error
+		GetMappings() (map[int]Mapping, error)
 		GetVersionsForComponent(projectID, componentID string) error
 		UpdateReleaseDate(mappingID int, releaseDate string) error
 		UpdateReleasedFlag(mappingID int, released bool) error
@@ -71,10 +71,16 @@ type (
 	}
 
 	Mapping struct {
-		ProjectID   int  `json:"projectId"`
-		ComponentID int  `json:"componentId"`
-		VersionID   int  `json:"versionId"`
-		Released    bool `json:"released"`
+		ID             int    `json:"id"`
+		ProjectID      int    `json:"projectId"`
+		ProjectKey     string `json:"projectKey"`
+		ProjectName    string `json:"projectName"`
+		ComponentID    int    `json:"componentId"`
+		VersionID      int    `json:"versionId"`
+		VersionName    string `json:"versionName"`
+		ComponentName  string `json:"componentName"`
+		Released       bool   `json:"released"`
+		ReleaseDateStr string `json:"releaseDateStr"`
 	}
 )
 
@@ -262,9 +268,36 @@ func (client DefaultClient) CreateMapping(projectID, componentID, versionID stri
 }
 
 // GetMappings returns all known mappings for all projects.
-func (client DefaultClient) GetMappings() error {
+func (client DefaultClient) GetMappings() (map[int]Mapping, error) {
 	// GET http://localhost:2990/rest/com.deniz.jira.mapping/latest/mappings
-	return nil
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/mappings", client.baseURL), nil)
+	if err != nil {
+		return nil, err
+	}
+	if debug {
+		log.Printf("jira.GetMappings URL %s\n", req.URL)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	if responseCode != http.StatusOK {
+		return nil, fmt.Errorf("error getting mappings.  Status code: %d.\n", responseCode)
+	}
+
+	var r []Mapping
+	if err := json.Unmarshal(data, &r); err != nil {
+		return nil, err
+	}
+
+	m := make(map[int]Mapping)
+	for _, c := range r {
+		m[c.ID] = c
+	}
+	return m, nil
 }
 
 // GetVersionsForComponent returns the versions for the given component ID in the context of the given project ID.
