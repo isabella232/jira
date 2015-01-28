@@ -67,7 +67,6 @@ type (
 		ProjectID   int    `json:"projectId"`
 		Archived    bool   `json:"archived"`
 		Released    bool   `json:"released"`
-		ReleaseDate string `json:"releaseDate"`
 	}
 
 	// Component Version add-on's notion of a version
@@ -201,8 +200,8 @@ func (client DefaultClient) CreateVersion(projectID, versionName string) (Versio
 	if err != nil {
 		return Version{}, err
 	}
-	//data, err := json.Marshal(&Version{Name: versionName, Description: "Version " + versionName, ProjectID: i, Archived: false, Released: true, ReleaseDate: time.Now().Format("2006-01-02")})
-	data, err := json.Marshal(&Version{Name: versionName, Description: "Version " + versionName, ProjectID: i, Archived: false})
+
+	data, err := json.Marshal(&Version{Name: versionName, Description: "Version " + versionName, ProjectID: i, Archived: false, Released: false})
 	if err != nil {
 		return Version{}, err
 	}
