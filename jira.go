@@ -268,10 +268,13 @@ func (client DefaultClient) CreateMapping(projectID, componentID, versionID stri
 		return Mapping{}, fmt.Errorf("error creating mapped version.  Status code: %d.\n", responseCode)
 	}
 
-	var v Mapping
-	if err := json.Unmarshal(data, &v); err != nil {
-		return Mapping{}, err
-	}
+	// No mapping object is returned with 201 created.
+	/*
+		var v Mapping
+		if err := json.Unmarshal(data, &v); err != nil {
+			return Mapping{}, err
+		}
+	*/
 	return Mapping{}, nil
 }
 
