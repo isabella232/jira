@@ -201,7 +201,8 @@ func (client DefaultClient) CreateVersion(projectID, versionName string) (Versio
 	if err != nil {
 		return Version{}, err
 	}
-	data, err := json.Marshal(&Version{Name: versionName, Description: "Version " + versionName, ProjectID: i, Archived: false, Released: true, ReleaseDate: time.Now().Format("2006-01-02")})
+	//data, err := json.Marshal(&Version{Name: versionName, Description: "Version " + versionName, ProjectID: i, Archived: false, Released: true, ReleaseDate: time.Now().Format("2006-01-02")})
+	data, err := json.Marshal(&Version{Name: versionName, Description: "Version " + versionName, ProjectID: i, Archived: false})
 	if err != nil {
 		return Version{}, err
 	}
