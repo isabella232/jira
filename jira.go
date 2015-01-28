@@ -345,7 +345,7 @@ func (client DefaultClient) GetVersionsForComponent(projectID, componentID strin
 
 // UpdateReleaseDate updates the version release date to releaseDate for the given mapping ID.
 func (client DefaultClient) UpdateReleaseDate(mappingID int, releaseDate string) error {
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/releaseDate/%d?releaseDate=%s", client.baseURL, mappingID, releaseDate), nil)
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/rest/com.deniz.jira.mapping/latest/releaseDate/%d?releaseDate=%s", client.baseURL, mappingID, url.QueryEscape(releaseDate)), nil)
 	if err != nil {
 		return err
 	}
