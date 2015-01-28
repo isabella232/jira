@@ -261,22 +261,34 @@ func (client DefaultClient) CreateMapping(projectID, componentID, versionID stri
 	req.Header.Set("Content-type", "application/json")
 	req.SetBasicAuth(client.username, client.password)
 
-	responseCode, data, err := client.consumeResponse(req)
+	response, err := client.httpClient.Do(req)
 	if err != nil {
 		return Mapping{}, err
 	}
-	if responseCode != http.StatusCreated {
-		return Mapping{}, fmt.Errorf("error creating mapped version.  Status code: %d.\n", responseCode)
+	defer response.Body.Close()
+
+	data, err = ioutil.ReadAll(response.Body)
+	if err != nil {
+		return Mapping{}, err
 	}
 
-	// No mapping object is returned with 201 created.
-	/*
-		var v Mapping
-		if err := json.Unmarshal(data, &v); err != nil {
-			return Mapping{}, err
+	if response.StatusCode != http.StatusCreated {
+		return Mapping{}, fmt.Errorf("error creating mapped version.  Status code: %d.\n", response.StatusCode)
+	}
+
+	if location, err := response.Location(); err != nil {
+		log.Printf("create-mapping response has no Location header.  Unable to acquire created mapping ID\n")
+		return Mapping{}, nil
+	} else {
+		h := location.String()
+		id, err := strconv.Atoi(h[strings.LastIndex(h, "/")+1:])
+		if err != nil {
+			log.Printf("create-mapping response Location header %s has unparseable non-integer urlPrefix/N mapping ID\n", h)
+			return Mapping{}, nil
 		}
-	*/
-	return Mapping{}, nil
+		return Mapping{ID: id}, nil
+	}
+
 }
 
 // GetMappings returns all known mappings for all projects.
