@@ -27,6 +27,7 @@ type (
 	// https://docs.atlassian.com/jira/REST/latest/
 	Core interface {
 		GetProject(projectKey string) (Project, error)
+		GetIssue(issueKey string) (Issue, error)
 		GetComponents(projectID string) (map[string]Component, error)
 		GetVersions(projectID string) (map[string]Version, error)
 		CreateVersion(projectID, versionName string) (Version, error)
@@ -43,6 +44,10 @@ type (
 	}
 
 	Project struct {
+		ID string `json:"id"`
+	}
+
+	Issue struct {
 		ID string `json:"id"`
 	}
 
@@ -122,6 +127,32 @@ func (client DefaultClient) GetProject(projectKey string) (Project, error) {
 	var r Project
 	if err := json.Unmarshal(data, &r); err != nil {
 		return Project{}, err
+	}
+
+	return r, nil
+}
+
+// GetIssue returns a representation of a Jira issue for the given issue key.  An example of a key is JIRA-1234.
+func (client DefaultClient) GetIssue(issueKey string) (Issue, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/issue/%s", client.baseURL, issueKey), nil)
+	if err != nil {
+		return Issue{}, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return Issue{}, err
+	}
+	if responseCode != http.StatusOK {
+		logger.Printf("JIRA response: %s\n", string(data))
+		return Issue{}, fmt.Errorf("error getting issue.  Status code: %d.\n", responseCode)
+	}
+
+	var r Issue
+	if err := json.Unmarshal(data, &r); err != nil {
+		return Issue{}, err
 	}
 
 	return r, nil
