@@ -317,7 +317,15 @@ func TestGetIssue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
+
 	if issue.ID != "176587" {
 		t.Fatalf("Want 176587 but got %s\n", issue.ID)
+	}
+
+	t.Log("fields: ")
+	t.Log(issue.fields)
+
+	if (issue.fields.status.name != "Resolved") {
+		t.Fatalf("Want Resolved but got %s\n", issue.fields.status.name)
 	}
 }
