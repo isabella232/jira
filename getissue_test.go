@@ -322,10 +322,7 @@ func TestGetIssue(t *testing.T) {
 		t.Fatalf("Want 176587 but got %s\n", issue.ID)
 	}
 
-	t.Log("fields: ")
-	t.Log(issue.fields)
-
-	if (issue.fields.status.name != "Resolved") {
-		t.Fatalf("Want Resolved but got %s\n", issue.fields.status.name)
+	if (issue.Fields.Status.Name != "Resolved") {
+		t.Fatalf("Want Resolved but got %s\n", issue.Fields.Status.Name)
 	}
 }

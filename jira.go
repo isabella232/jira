@@ -48,17 +48,16 @@ type (
 	}
 
 	Status struct {
-		name string `json:"name"`
+		Name string `json:"name"`
 	}
 
 	Fields struct {
-		created string `json:"created"`
-		status Status `json:"status"`
+		Status Status `json:"status"`
 	}
 
 	Issue struct {
 		ID string `json:"id"`
-		fields Fields `json:"fields"`
+		Fields Fields `json:"fields"`
 	}
 
 	DefaultClient struct {
