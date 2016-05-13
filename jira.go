@@ -28,6 +28,7 @@ type (
 	Core interface {
 		GetProject(projectKey string) (Project, error)
 		GetIssue(issueKey string) (Issue, error)
+		TransitionIssue(issueKey string, transitionId string, fixVersion string) (int, error)
 		GetComponents(projectID string) (map[string]Component, error)
 		GetVersions(projectID string) (map[string]Version, error)
 		CreateVersion(projectID, versionName string) (Version, error)
@@ -51,13 +52,23 @@ type (
 		Name string `json:"name"`
 	}
 
+	FixVersion struct {
+		Name string `json:"name"`
+	}
+
 	Fields struct {
 		Status Status `json:"status"`
+		FixVersions[1] FixVersion `json:"fixVersions"`
+	}
+
+	Transition struct {
+		ID string `json:"id"`
 	}
 
 	Issue struct {
 		ID string `json:"id"`
 		Fields Fields `json:"fields"`
+		Transition Transition `json:"transition"`
 	}
 
 	DefaultClient struct {
@@ -165,6 +176,31 @@ func (client DefaultClient) GetIssue(issueKey string) (Issue, error) {
 	}
 
 	return r, nil
+}
+
+// TransitionIssue will transition an issue to the specified transition.
+func (client DefaultClient) TransitionIssue(issueKey string, transitionId string, fixVersion string) (int, error) {
+	issue := new(Issue)
+	issue.Transition.ID = transitionId
+	issue.Fields.FixVersions[0].Name = fixVersion
+
+	data, err := json.Marshal(&issue)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/api/2/issue/%s/transitions", client.baseURL, issueKey), bytes.NewBuffer(data))
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	req.Header.Set("Content-type", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	rc, _, err := client.consumeResponse(req)
+	if err != nil {
+		return rc, err
+	}
+
+	return rc, nil
 }
 
 // GetComponents returns a map of Component indexed by component name for the given project ID.
