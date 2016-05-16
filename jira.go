@@ -49,26 +49,26 @@ type (
 	}
 
 	Status struct {
-		Name string `json:"name"`
+		Name string `json:"name,omitempty"`
 	}
 
 	FixVersion struct {
-		Name string `json:"name"`
+		Name string `json:"name,omitempty"`
 	}
 
 	Fields struct {
-		Status Status `json:"status"`
-		FixVersions[1] FixVersion `json:"fixVersions"`
+		Status Status `json:"status,omitempty"`
+		FixVersions[1] FixVersion `json:"fixVersions,omitempty"`
 	}
 
 	Transition struct {
-		ID string `json:"id"`
+		ID string `json:"id,omitempty"`
 	}
 
 	Issue struct {
-		ID string `json:"id"`
-		Fields Fields `json:"fields"`
-		Transition Transition `json:"transition"`
+		ID string `json:"id,omitempty"`
+		Fields Fields `json:"fields,omitempty"`
+		Transition Transition `json:"transition,omitempty"`
 	}
 
 	DefaultClient struct {
