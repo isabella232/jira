@@ -28,6 +28,7 @@ type (
 	Core interface {
 		GetProject(projectKey string) (Project, error)
 		GetIssue(issueKey string) (Issue, error)
+		GetTransitions(issueKey string) (Transitions, error)
 		TransitionIssue(issueKey string, transitionId string, fixVersion string) (int, error)
 		GetComponents(projectID string) (map[string]Component, error)
 		GetVersions(projectID string) (map[string]Version, error)
@@ -63,6 +64,11 @@ type (
 
 	Transition struct {
 		ID string `json:"id,omitempty"`
+		Name string `json:"name,omitempty"`
+	}
+
+	Transitions struct {
+		AvailableTransitions []Transition `json:"transitions,omitempty"`
 	}
 
 	Issue struct {
@@ -173,6 +179,32 @@ func (client DefaultClient) GetIssue(issueKey string) (Issue, error) {
 	var r Issue
 	if err := json.Unmarshal(data, &r); err != nil {
 		return Issue{}, err
+	}
+
+	return r, nil
+}
+
+// GetTransistions returns an array of possible transitions for a Jira issue.  An example of a key is JIRA-1234.
+func (client DefaultClient) GetTransitions(issueKey string) (Transitions, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/issue/%s/transitions", client.baseURL, issueKey), nil)
+	if err != nil {
+		return Transitions{}, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return Transitions{}, err
+	}
+	if responseCode != http.StatusOK {
+		logger.Printf("JIRA response: %s\n", string(data))
+		return Transitions{}, fmt.Errorf("error getting transitions.  Status code: %d.\n", responseCode)
+	}
+
+	var r Transitions
+	if err := json.Unmarshal(data, &r); err != nil {
+		return Transitions{}, err
 	}
 
 	return r, nil
