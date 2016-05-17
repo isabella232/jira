@@ -7,6 +7,7 @@ import (
 	"testing"
 	"io/ioutil"
 	"encoding/json"
+	"fmt"
 )
 
 func TestTransitionIssue(t *testing.T) {
@@ -30,10 +31,14 @@ func TestTransitionIssue(t *testing.T) {
 			t.Fatalf("error reading POST body: %v\n", err)
 		}
 
+		fmt.Printf("@@@ %s\n", string(data))
+
 		var issue Issue
 		if err := json.Unmarshal(data, &issue); err != nil {
 			t.Fatalf("Unexpected error: %v\n", err)
 		}
+
+		fmt.Printf("%+v\n", issue)
 
 		if issue.Transition.ID != "341" {
 			t.Fatalf("Want 341 but got %s\n", issue.Transition.ID)

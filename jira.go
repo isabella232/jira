@@ -57,8 +57,8 @@ type (
 	}
 
 	Fields struct {
-		Status Status `json:"status,omitempty"`
-		FixVersions[1] FixVersion `json:"fixVersions,omitempty"`
+		Status *Status `json:"status,omitempty"`
+		FixVersions []FixVersion `json:"fixVersions,omitempty"`
 	}
 
 	Transition struct {
@@ -180,14 +180,25 @@ func (client DefaultClient) GetIssue(issueKey string) (Issue, error) {
 
 // TransitionIssue will transition an issue to the specified transition.
 func (client DefaultClient) TransitionIssue(issueKey string, transitionId string, fixVersion string) (int, error) {
-	issue := new(Issue)
-	issue.Transition.ID = transitionId
-	issue.Fields.FixVersions[0].Name = fixVersion
+
+	issue := Issue{
+		Transition: Transition{
+			ID: transitionId,
+		},
+		Fields: Fields{
+			FixVersions: []FixVersion{
+				FixVersion{
+					Name: fixVersion,
+				},
+			},
+		},
+	}
 
 	data, err := json.Marshal(&issue)
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
+
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/api/2/issue/%s/transitions", client.baseURL, issueKey), bytes.NewBuffer(data))
 	if err != nil {
 		return http.StatusBadRequest, err
@@ -195,9 +206,11 @@ func (client DefaultClient) TransitionIssue(issueKey string, transitionId string
 	req.Header.Set("Content-type", "application/json")
 	req.SetBasicAuth(client.username, client.password)
 
-	rc, _, err := client.consumeResponse(req)
+	rc, data, err := client.consumeResponse(req)
 	if err != nil {
 		return rc, err
+	} else if rc != http.StatusNoContent {
+		logger.Println(string(data))
 	}
 
 	return rc, nil
