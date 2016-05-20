@@ -33,18 +33,25 @@ func TestAddFixVersion(t *testing.T) {
 
 		fmt.Printf("@@@ %s\n", string(data))
 
-		var issue updateIssue
-		if err := json.Unmarshal(data, &issue); err != nil {
+		var change struct {
+			Update struct {
+				       FixedVersions [1]struct {
+					       Add struct {
+							   FixVersion string
+						   } `json:"add"`
+				       } `json:"fixVersion"`
+			       } `json:"update"`
+		}
+
+		if err := json.Unmarshal(data, &change); err != nil {
 			t.Fatalf("Unexpected error: %v\n", err)
 		}
 
-		fmt.Printf("%+v\n", issue)
+		fmt.Printf("%+v\n", change)
 
-		if issue.update.fixVersions[0].add != "1.0" {
-			t.Fatalf("Want 1.0 but got %s\n", issue.update.fixVersions[0].add)
+		if change.Update.FixedVersions[0].Add.FixVersion != "1.0" {
+			t.Fatalf("Want 1.0 but got %s\n", change.Update.FixedVersions[0].Add.FixVersion)
 		}
-
-		w.WriteHeader(204)
 	}))
 	defer testServer.Close()
 

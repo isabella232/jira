@@ -78,17 +78,6 @@ type (
 		Transition Transition `json:"transition,omitempty"`
 	}
 
-	addFixVersion struct {
-		add string `json:"add"`
-	}
-	update struct {
-		fixVersions []addFixVersion `json:"fixVersions"`
-	}
-
-	updateIssue struct {
-		update update `json:"update"`
-	}
-
 	DefaultClient struct {
 		username   string
 		password   string
@@ -358,15 +347,18 @@ func (client DefaultClient) CreateVersion(projectID, versionName string) (Versio
 
 // PutIssue sets the values of an existing issue in Jira.
 func (client DefaultClient) AddFixVersion(issueKey string, fixVersion string) (int, error) {
-	change := updateIssue {
-		update : update{
-			fixVersions: []addFixVersion{
-				addFixVersion{
-					add: fixVersion,
-				},
-			},
-		},
+
+	var change struct {
+		Update struct {
+			FixedVersions [1]struct {
+				Add struct {
+					FixVersion string
+				    } `json:"add"`
+			} `json:"fixVersion"`
+		} `json:"update"`
 	}
+
+	change.Update.FixedVersions[0].Add.FixVersion = fixVersion;
 
 	data, err := json.Marshal(&change)
 	if err != nil {
