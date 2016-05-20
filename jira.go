@@ -33,6 +33,7 @@ type (
 		GetComponents(projectID string) (map[string]Component, error)
 		GetVersions(projectID string) (map[string]Version, error)
 		CreateVersion(projectID, versionName string) (Version, error)
+		AddFixVersion(issueKey string, fixVersion string) (int, error)
 	}
 
 	// http://jiraplugins.denizoguz.com/wp-content/uploads/2014/09/REST-Manual-v0.1.pdf
@@ -75,6 +76,17 @@ type (
 		ID string `json:"id,omitempty"`
 		Fields Fields `json:"fields,omitempty"`
 		Transition Transition `json:"transition,omitempty"`
+	}
+
+	addFixVersion struct {
+		add string `json:"add"`
+	}
+	update struct {
+		fixVersions []addFixVersion `json:"fixVersions"`
+	}
+
+	updateIssue struct {
+		update update `json:"update"`
 	}
 
 	DefaultClient struct {
@@ -342,6 +354,40 @@ func (client DefaultClient) CreateVersion(projectID, versionName string) (Versio
 		return Version{}, err
 	}
 	return v, nil
+}
+
+// PutIssue sets the values of an existing issue in Jira.
+func (client DefaultClient) AddFixVersion(issueKey string, fixVersion string) (int, error) {
+	change := updateIssue {
+		update : update{
+			fixVersions: []addFixVersion{
+				addFixVersion{
+					add: fixVersion,
+				},
+			},
+		},
+	}
+
+	data, err := json.Marshal(&change)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/rest/api/2/issue/%s", client.baseURL, issueKey), bytes.NewBuffer(data))
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	req.Header.Set("Content-type", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	rc, data, err := client.consumeResponse(req)
+	if err != nil {
+		return rc, err
+	} else if rc != http.StatusNoContent {
+		logger.Println(string(data))
+	}
+
+	return rc, nil
 }
 
 // CreateMapping creates a mapping between the given component ID and version ID in the context of the given project ID.
