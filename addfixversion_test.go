@@ -37,9 +37,9 @@ func TestAddFixVersion(t *testing.T) {
 			Update struct {
 				       FixedVersions [1]struct {
 					       Add struct {
-							   FixVersion string
+							   Name string `json:"name"`
 						   } `json:"add"`
-				       } `json:"fixVersion"`
+				       } `json:"fixVersions"`
 			       } `json:"update"`
 		}
 
@@ -49,8 +49,8 @@ func TestAddFixVersion(t *testing.T) {
 
 		fmt.Printf("%+v\n", change)
 
-		if change.Update.FixedVersions[0].Add.FixVersion != "1.0" {
-			t.Fatalf("Want 1.0 but got %s\n", change.Update.FixedVersions[0].Add.FixVersion)
+		if change.Update.FixedVersions[0].Add.Name != "1.0" {
+			t.Fatalf("Want 1.0 but got %s\n", change.Update.FixedVersions[0].Add.Name)
 		}
 	}))
 	defer testServer.Close()

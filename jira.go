@@ -350,15 +350,15 @@ func (client DefaultClient) AddFixVersion(issueKey string, fixVersion string) (i
 
 	var change struct {
 		Update struct {
-			FixedVersions [1]struct {
-				Add struct {
-					FixVersion string
-				    } `json:"add"`
-			} `json:"fixVersion"`
-		} `json:"update"`
+		       FixedVersions [1]struct {
+			       Add struct {
+				       Name string `json:"name"`
+				   } `json:"add"`
+		       } `json:"fixVersions"`
+	       } `json:"update"`
 	}
 
-	change.Update.FixedVersions[0].Add.FixVersion = fixVersion;
+	change.Update.FixedVersions[0].Add.Name = fixVersion;
 
 	data, err := json.Marshal(&change)
 	if err != nil {
@@ -376,7 +376,7 @@ func (client DefaultClient) AddFixVersion(issueKey string, fixVersion string) (i
 	if err != nil {
 		return rc, err
 	} else if rc != http.StatusNoContent {
-		logger.Println(string(data))
+		logger.Printf("Returned %s, becuase %s", rc, string(data))
 	}
 
 	return rc, nil
