@@ -81,7 +81,7 @@ func TestGetTransitions(t *testing.T) {
 		t.Fatalf("Want 341 but got %s\n", transitions.AvailableTransitions[1].ID)
 	}
 
-	if (transitions.AvailableTransitions[1].Name != "Merge To Master") {
+	if transitions.AvailableTransitions[1].Name != "Merge To Master" {
 		t.Fatalf("Want Resolved but got %s\n", transitions.AvailableTransitions[1].Name)
 	}
 }

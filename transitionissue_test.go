@@ -1,13 +1,13 @@
 package jira
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
-	"io/ioutil"
-	"encoding/json"
-	"fmt"
 )
 
 func TestTransitionIssue(t *testing.T) {
@@ -59,7 +59,7 @@ func TestTransitionIssue(t *testing.T) {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 
-	if (rc != http.StatusNoContent) {
+	if rc != http.StatusNoContent {
 		t.Fatalf("Excpected 204, but was %s", rc)
 	}
 }

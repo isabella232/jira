@@ -59,12 +59,12 @@ type (
 	}
 
 	Fields struct {
-		Status *Status `json:"status,omitempty"`
+		Status      *Status      `json:"status,omitempty"`
 		FixVersions []FixVersion `json:"fixVersions,omitempty"`
 	}
 
 	Transition struct {
-		ID string `json:"id,omitempty"`
+		ID   string `json:"id,omitempty"`
 		Name string `json:"name,omitempty"`
 	}
 
@@ -73,8 +73,8 @@ type (
 	}
 
 	Issue struct {
-		ID string `json:"id,omitempty"`
-		Fields Fields `json:"fields,omitempty"`
+		ID         string     `json:"id,omitempty"`
+		Fields     Fields     `json:"fields,omitempty"`
 		Transition Transition `json:"transition,omitempty"`
 	}
 
@@ -350,15 +350,15 @@ func (client DefaultClient) AddFixVersion(issueKey string, fixVersion string) (i
 
 	var change struct {
 		Update struct {
-		       FixedVersions [1]struct {
-			       Add struct {
-				       Name string `json:"name"`
-				   } `json:"add"`
-		       } `json:"fixVersions"`
-	       } `json:"update"`
+			FixedVersions [1]struct {
+				Add struct {
+					Name string `json:"name"`
+				} `json:"add"`
+			} `json:"fixVersions"`
+		} `json:"update"`
 	}
 
-	change.Update.FixedVersions[0].Add.Name = fixVersion;
+	change.Update.FixedVersions[0].Add.Name = fixVersion
 
 	data, err := json.Marshal(&change)
 	if err != nil {

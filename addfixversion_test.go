@@ -1,13 +1,13 @@
 package jira
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
-	"io/ioutil"
-	"encoding/json"
-	"fmt"
 )
 
 func TestAddFixVersion(t *testing.T) {
@@ -35,12 +35,12 @@ func TestAddFixVersion(t *testing.T) {
 
 		var change struct {
 			Update struct {
-				       FixedVersions [1]struct {
-					       Add struct {
-							   Name string `json:"name"`
-						   } `json:"add"`
-				       } `json:"fixVersions"`
-			       } `json:"update"`
+				FixedVersions [1]struct {
+					Add struct {
+						Name string `json:"name"`
+					} `json:"add"`
+				} `json:"fixVersions"`
+			} `json:"update"`
 		}
 
 		if err := json.Unmarshal(data, &change); err != nil {
