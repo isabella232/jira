@@ -27,9 +27,13 @@ type (
 	// https://docs.atlassian.com/jira/REST/latest/
 	Core interface {
 		GetProject(projectKey string) (Project, error)
+		GetIssue(issueKey string) (Issue, error)
+		GetTransitions(issueKey string) (Transitions, error)
+		TransitionIssue(issueKey string, transitionId string, fixVersion string) (int, error)
 		GetComponents(projectID string) (map[string]Component, error)
 		GetVersions(projectID string) (map[string]Version, error)
 		CreateVersion(projectID, versionName string) (Version, error)
+		AddFixVersion(issueKey string, fixVersion string) (int, error)
 	}
 
 	// http://jiraplugins.denizoguz.com/wp-content/uploads/2014/09/REST-Manual-v0.1.pdf
@@ -44,6 +48,34 @@ type (
 
 	Project struct {
 		ID string `json:"id"`
+	}
+
+	Status struct {
+		Name string `json:"name,omitempty"`
+	}
+
+	FixVersion struct {
+		Name string `json:"name,omitempty"`
+	}
+
+	Fields struct {
+		Status      *Status      `json:"status,omitempty"`
+		FixVersions []FixVersion `json:"fixVersions,omitempty"`
+	}
+
+	Transition struct {
+		ID   string `json:"id,omitempty"`
+		Name string `json:"name,omitempty"`
+	}
+
+	Transitions struct {
+		AvailableTransitions []Transition `json:"transitions,omitempty"`
+	}
+
+	Issue struct {
+		ID         string     `json:"id,omitempty"`
+		Fields     Fields     `json:"fields,omitempty"`
+		Transition Transition `json:"transition,omitempty"`
 	}
 
 	DefaultClient struct {
@@ -125,6 +157,96 @@ func (client DefaultClient) GetProject(projectKey string) (Project, error) {
 	}
 
 	return r, nil
+}
+
+// GetIssue returns a representation of a Jira issue for the given issue key.  An example of a key is JIRA-1234.
+func (client DefaultClient) GetIssue(issueKey string) (Issue, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/issue/%s", client.baseURL, issueKey), nil)
+	if err != nil {
+		return Issue{}, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return Issue{}, err
+	}
+	if responseCode != http.StatusOK {
+		logger.Printf("JIRA response: %s\n", string(data))
+		return Issue{}, fmt.Errorf("error getting issue.  Status code: %d.\n", responseCode)
+	}
+
+	var r Issue
+	if err := json.Unmarshal(data, &r); err != nil {
+		return Issue{}, err
+	}
+
+	return r, nil
+}
+
+// GetTransistions returns an array of possible transitions for a Jira issue.  An example of a key is JIRA-1234.
+func (client DefaultClient) GetTransitions(issueKey string) (Transitions, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/rest/api/2/issue/%s/transitions", client.baseURL, issueKey), nil)
+	if err != nil {
+		return Transitions{}, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	responseCode, data, err := client.consumeResponse(req)
+	if err != nil {
+		return Transitions{}, err
+	}
+	if responseCode != http.StatusOK {
+		logger.Printf("JIRA response: %s\n", string(data))
+		return Transitions{}, fmt.Errorf("error getting transitions.  Status code: %d.\n", responseCode)
+	}
+
+	var r Transitions
+	if err := json.Unmarshal(data, &r); err != nil {
+		return Transitions{}, err
+	}
+
+	return r, nil
+}
+
+// TransitionIssue will transition an issue to the specified transition.
+func (client DefaultClient) TransitionIssue(issueKey string, transitionId string, fixVersion string) (int, error) {
+
+	issue := Issue{
+		Transition: Transition{
+			ID: transitionId,
+		},
+		Fields: Fields{
+			FixVersions: []FixVersion{
+				FixVersion{
+					Name: fixVersion,
+				},
+			},
+		},
+	}
+
+	data, err := json.Marshal(&issue)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/api/2/issue/%s/transitions", client.baseURL, issueKey), bytes.NewBuffer(data))
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	req.Header.Set("Content-type", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	rc, data, err := client.consumeResponse(req)
+	if err != nil {
+		return rc, err
+	} else if rc != http.StatusNoContent {
+		logger.Println(string(data))
+	}
+
+	return rc, nil
 }
 
 // GetComponents returns a map of Component indexed by component name for the given project ID.
@@ -221,6 +343,43 @@ func (client DefaultClient) CreateVersion(projectID, versionName string) (Versio
 		return Version{}, err
 	}
 	return v, nil
+}
+
+// PutIssue sets the values of an existing issue in Jira.
+func (client DefaultClient) AddFixVersion(issueKey string, fixVersion string) (int, error) {
+
+	var change struct {
+		Update struct {
+			FixedVersions [1]struct {
+				Add struct {
+					Name string `json:"name"`
+				} `json:"add"`
+			} `json:"fixVersions"`
+		} `json:"update"`
+	}
+
+	change.Update.FixedVersions[0].Add.Name = fixVersion
+
+	data, err := json.Marshal(&change)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/rest/api/2/issue/%s", client.baseURL, issueKey), bytes.NewBuffer(data))
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	req.Header.Set("Content-type", "application/json")
+	req.SetBasicAuth(client.username, client.password)
+
+	rc, data, err := client.consumeResponse(req)
+	if err != nil {
+		return rc, err
+	} else if rc != http.StatusNoContent {
+		logger.Printf("Returned %s, becuase %s", rc, string(data))
+	}
+
+	return rc, nil
 }
 
 // CreateMapping creates a mapping between the given component ID and version ID in the context of the given project ID.
